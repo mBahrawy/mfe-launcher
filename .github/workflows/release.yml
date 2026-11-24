@@ -67,6 +67,10 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           DRAFT: ${{ github.event_name == 'workflow_dispatch' && inputs.draft }}
         run: |
+          # Publishing a draft creates its tag, which runs this workflow again.
+          gh release view "v$env:VERSION" *> $null
+          if ($LASTEXITCODE -eq 0) { "Release v$env:VERSION already exists, nothing to create."; exit 0 }
+
           $releaseArgs = @(
             "v$env:VERSION", 'dist/mfe-launcher.exe', 'dist/SHA256SUMS.txt',
             '--title', "MFE Launcher v$env:VERSION", '--generate-notes', '--target', $env:GITHUB_SHA

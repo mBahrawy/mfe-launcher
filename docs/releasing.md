@@ -45,5 +45,5 @@ To stamp a local build the same way:
 ## Notes
 
 - The workflow needs `contents: write` permission to create releases. It's declared in the workflow file, so no repository settings need to change.
-- A release fails if its tag already has a release. Delete the old release, or use a new version.
+- If the tag already has a release, the workflow builds but leaves that release as it is. This happens on purpose when you publish a draft: GitHub creates the tag, and the tag runs the workflow again. To rebuild a release, delete it first, or release a new version.
 - The exe isn't code-signed, so Windows SmartScreen warns on first run. See [Troubleshooting](troubleshooting.md#windows-smartscreen-blocks-the-exe).
