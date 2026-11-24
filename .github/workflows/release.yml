@@ -1,0 +1,75 @@
+name: Release
+
+# Push a tag like v1.2.0 to publish a release, or run it by hand (draft by default) from the Actions tab.
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, e.g. 1.2.0
+        required: true
+      draft:
+        description: Create the release as a draft
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = if ($env:GITHUB_EVENT_NAME -eq 'push') { $env:TAG } else { $env:INPUT_VERSION }
+          $version = $version.Trim().TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Version must look like 1.2.3, got '$version'." }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Build
+        shell: pwsh
+        run: ./build.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash dist/mfe-launcher.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  mfe-launcher.exe" | Out-File dist/SHA256SUMS.txt -Encoding ascii
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mfe-launcher-${{ steps.version.outputs.version }}
+          path: |
+            dist/mfe-launcher.exe
+            dist/SHA256SUMS.txt
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DRAFT: ${{ github.event_name == 'workflow_dispatch' && inputs.draft }}
+        run: |
+          $releaseArgs = @(
+            "v$env:VERSION", 'dist/mfe-launcher.exe', 'dist/SHA256SUMS.txt',
+            '--title', "MFE Launcher v$env:VERSION", '--generate-notes', '--target', $env:GITHUB_SHA
+          )
+          if ($env:DRAFT -eq 'true') { $releaseArgs += '--draft' }
+          gh release create @releaseArgs

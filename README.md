@@ -40,7 +40,13 @@ See [docs/workspace-requirements.md](docs/workspace-requirements.md) for the mic
 
 ### 1. Get the exe
 
-Build it from source. The only thing you need is any [.NET SDK](https://dotnet.microsoft.com/download) (6 or later):
+**Download:** take `mfe-launcher.exe` from the latest release on the [Releases](../../releases/latest) page. Each release also has a `SHA256SUMS.txt` you can check the file against:
+
+```powershell
+Get-FileHash .\mfe-launcher.exe -Algorithm SHA256
+```
+
+**Or build it from source.** The only thing you need is any [.NET SDK](https://dotnet.microsoft.com/download) (6 or later):
 
 ```powershell
 git clone <this-repo-url> mfe-launcher
@@ -81,11 +87,14 @@ See [docs/getting-started.md](docs/getting-started.md) for a step-by-step first 
 | [Workspace requirements](docs/workspace-requirements.md) | Nx monorepo layout, micro-frontend patterns, Angular and Nx versions |
 | [How it works](docs/how-it-works.md) | Architecture, process handling, status logic, source map |
 | [Troubleshooting](docs/troubleshooting.md) | Common problems and fixes |
+| [Releasing](docs/releasing.md) | How the release pipeline builds and publishes the exe |
 
 ## Project layout
 
 ```
 mfe-launcher/
+├─ .github/workflows/
+│  └─ release.yml         Builds the exe and publishes a GitHub release
 ├─ build.ps1              Build script (dotnet build + copy)
 ├─ src/                   C# WinForms source (.NET Framework 4.8)
 │  ├─ MfeLauncher.csproj

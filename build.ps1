@@ -1,9 +1,12 @@
 # Builds dist\mfe-launcher.exe (.NET Framework 4.8, nothing to install on Windows 10/11).
 # -Dest also copies it into a workspace folder, e.g. .\build.ps1 -Dest C:\code\my-nx-workspace
-param([string]$Dest)
+# -Version stamps the exe's file and product version, e.g. .\build.ps1 -Version 1.2.0
+param([string]$Dest, [string]$Version)
 
 $ErrorActionPreference = 'Stop'
-dotnet build "$PSScriptRoot\src\MfeLauncher.csproj" -c Release --nologo -v q
+$versionArgs = @()
+if ($Version) { $versionArgs += "-p:Version=$Version" }
+dotnet build "$PSScriptRoot\src\MfeLauncher.csproj" -c Release --nologo -v q @versionArgs
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $exe = "$PSScriptRoot\src\bin\Release\net48\mfe-launcher.exe"
